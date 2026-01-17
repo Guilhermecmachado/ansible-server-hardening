@@ -5,7 +5,10 @@
         "ansible_host": "127.0.0.1", // Your Host
         "ansible_user": "root", // For first start, indicate 'root' user
         "ansible_password": "<ROOT PASSWORD>", // Password for user. Ansible can enter without password via SSH key
-        "allow_ports": [22, 5432, 4000] // Ports
+        "allow_ports": [22, 5432, 4000], // Ports
+        "target_user": "User", // User, that created via Ansible
+        "target_user_password_hash": "<PASSWORD HASH>", // Hash password for user
+        "user_ssh_public_key": "<SSH KEY>" // SSH key for connection without password
       }
     }
   }

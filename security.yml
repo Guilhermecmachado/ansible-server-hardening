@@ -4,18 +4,16 @@
   become: true
   vars:
     target_user: 'ArturOG'
-    target_password_raw: 'ir4cdcrrDu5nR'
+    password: '<PASSWORD HASH>'
     user_ssh_public_key: >
-      ssh-rsa
-      AAAAB3NzaC1yc2EAAAADAQABAAABgQDARyK8s33Jj9nIT58JOOnoPzGwe0pNf3/FF+BkXjTKmOVJGAXRgqJKq3qsVvm+09dp2R/fHnQHPh5DgGCfLivSO3H6/44DUm4tOMmvBGE3B/6mEsZd0ujNACVFeMb3xr0WUDjcxtjdLG7cUhLAgopHjmv9682xfvlgPBm0dV4A+v2n8rEaNbplxsJPYEeRQR5GOsbZAzWIz2ZymfhejQH7X6/4E5s5wtPqNGTrjbRWTv0UQCSYR/XvBP7ifWY/KzU5MkIgubjJsBxt6Y++Ch0yucYu9+MFkKLDbqe9PtQM4zEn0VNOOd6QIvU3QDVrF/txTCCB++P52cgleem11UjSslE8Inzxb2IIcA8fXY4FGYhUBQmRoOQHQi3N1K5ras5fxvuOF348IkrcntJrK+9FQmE8hFsZq4LgafIpaGC30EVKoZ8KMClp69h8QfieI7iGsZOE2pLfTI0GKoh8kCwDHVzcnCVhZATWK2gNAHQZtC+eOycPze2APDCgimb3vEM=
-      pavelr@pavel-pc
+      <SSH PUBLIC KEY>
     ssh_port: 22
 
   tasks:
     - name: Create a new user with sudo privileges
       user:
         name: '{{ target_user }}'
-        password: '$6$jqGSZBAU36oOYX0q$u6MuamUMC1HIm0YkG81tLCLrHeoc7mB4dXFR99Ru8di5zucfzh1p.TYhAPdLVnqSHZh/qLWnZlBVEpOYkzGPz1'
+        password: '{{ password }}'
         shell: /bin/bash
         groups: sudo
         append: yes

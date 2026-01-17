@@ -1,0 +1,12 @@
+{
+  "all": {
+    "hosts": {
+      "one_server": {
+        "ansible_host": "91.210.171.41",
+        "ansible_user": "ArturOG",
+        "ansible_become_password": "ir4cdcrrDu5nR",
+        "allow_ports": [22, 5432, 4000]
+      }
+    }
+  }
+}

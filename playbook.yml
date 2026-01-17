@@ -1,0 +1,78 @@
+- name: Configure server, install Docker/Git and setup user
+  hosts: all
+  become: yes
+  vars:
+    new_user: 'Ncesam'
+    user_password: '56730912xz'
+
+  tasks:
+    - name: Ensure group "docker" exists
+      group:
+        name: docker
+        state: present
+
+    - name: Create a new user with sudo styling
+      user:
+        name: '{{ new_user }}'
+        password: '$6$Zgn6tUsjov8.v/z0$AEah762ySLbu5qJqXLTnHUUVme8HYArgYmZR6IQlMkzv0fTk6jltVxJLdv542nzYxuJQ6qAATYYPyn8u.h1Hw.'
+        shell: /bin/bash
+        groups: sudo, docker
+        append: yes
+        generate_ssh_key: yes
+        ssh_key_bits: 4096
+        ssh_key_file: .ssh/id_rsa
+
+    - name: Install prerequisites for Docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - git
+        state: present
+        update_cache: yes
+
+    - name: Remove conflicting Docker list files (Fix 404/Conflict)
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - /etc/apt/sources.list.d/docker.list
+        - /etc/apt/keyrings/docker.gpg
+        
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Install Git and base dependencies
+      apt:
+        name: [git, curl, ca-certificates]
+        state: present
+        update_cache: yes
+    - name: Add Docker Repository
+      apt_repository:
+        repo:
+          deb [arch=amd64] https://download.docker.com/linux/ubuntu {{
+          ansible_distribution_release }} stable
+        state: present
+
+    - name: Install Docker Engine
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+
+    - name: Ensure Docker is started and enabled
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Fetch the public SSH key back to local machine
+      fetch:
+        src: '/home/{{ new_user }}/.ssh/id_rsa.pub'
+        dest:
+          './fetched_keys/{{ inventory_hostname }}_{{ new_user }}_id_rsa.pub'
+        flat: yes

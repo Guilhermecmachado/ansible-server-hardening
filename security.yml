@@ -1,0 +1,114 @@
+---
+- name: Hardening Server Setup
+  hosts: all
+  become: true
+  vars:
+    target_user: 'ArturOG'
+    target_password_raw: 'ir4cdcrrDu5nR'
+    user_ssh_public_key: >
+      ssh-rsa
+      AAAAB3NzaC1yc2EAAAADAQABAAABgQDARyK8s33Jj9nIT58JOOnoPzGwe0pNf3/FF+BkXjTKmOVJGAXRgqJKq3qsVvm+09dp2R/fHnQHPh5DgGCfLivSO3H6/44DUm4tOMmvBGE3B/6mEsZd0ujNACVFeMb3xr0WUDjcxtjdLG7cUhLAgopHjmv9682xfvlgPBm0dV4A+v2n8rEaNbplxsJPYEeRQR5GOsbZAzWIz2ZymfhejQH7X6/4E5s5wtPqNGTrjbRWTv0UQCSYR/XvBP7ifWY/KzU5MkIgubjJsBxt6Y++Ch0yucYu9+MFkKLDbqe9PtQM4zEn0VNOOd6QIvU3QDVrF/txTCCB++P52cgleem11UjSslE8Inzxb2IIcA8fXY4FGYhUBQmRoOQHQi3N1K5ras5fxvuOF348IkrcntJrK+9FQmE8hFsZq4LgafIpaGC30EVKoZ8KMClp69h8QfieI7iGsZOE2pLfTI0GKoh8kCwDHVzcnCVhZATWK2gNAHQZtC+eOycPze2APDCgimb3vEM=
+      pavelr@pavel-pc
+    ssh_port: 22
+
+  tasks:
+    - name: Create a new user with sudo privileges
+      user:
+        name: '{{ target_user }}'
+        password: '$6$jqGSZBAU36oOYX0q$u6MuamUMC1HIm0YkG81tLCLrHeoc7mB4dXFR99Ru8di5zucfzh1p.TYhAPdLVnqSHZh/qLWnZlBVEpOYkzGPz1'
+        shell: /bin/bash
+        groups: sudo
+        append: yes
+        state: present
+
+    - name: Set up authorized keys (SSH)
+      authorized_key:
+        user: '{{ target_user }}'
+        state: present
+        key: '{{ user_ssh_public_key }}'
+
+    - name: Configure SSH Daemon
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '{{ item.regexp }}'
+        line: '{{ item.line }}'
+        state: present
+        validate: 'sshd -t -f %s'
+      loop:
+        - { regexp: '^PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^PermitEmptyPasswords', line: 'PermitEmptyPasswords no' }
+        - {
+            regexp: '^PasswordAuthentication',
+            line: 'PasswordAuthentication no',
+          }
+      notify: Restart SSH
+
+    - name: Install Fail2Ban
+      apt:
+        name: fail2ban
+        state: present
+        update_cache: no
+
+    - name: Configure Fail2Ban local config
+      copy:
+        dest: /etc/fail2ban/jail.local
+        content: |
+          [DEFAULT]
+          bantime  = 1h
+          findtime = 10m
+          maxretry = 3
+
+          [sshd]
+          enabled = true
+          port    = {{ ssh_port }}
+      notify: Restart Fail2Ban
+
+    - name: Install UFW
+      apt:
+        name: ufw
+        state: present
+
+    - name: Reset UFW to default (incoming deny, outgoing allow)
+      ufw:
+        direction: '{{ item.direction }}'
+        policy: '{{ item.policy }}'
+      loop:
+        - { direction: 'incoming', policy: 'deny' }
+        - { direction: 'outgoing', policy: 'allow' }
+
+    - name: Allow SSH connection
+      ufw:
+        rule: allow
+        port: '{{ ssh_port | string }}'
+        proto: tcp
+
+    - name: Allow defined ports
+      ufw:
+        rule: allow
+        port: '{{ item | string }}'
+        proto: tcp
+      loop: '{{ allow_ports }}'
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+
+    - name: Disable ICMP echo requests (Ping) at kernel level
+      ansible.posix.sysctl:
+        name: net.ipv4.icmp_echo_ignore_all
+        value: '1'
+        state: present
+        reload: yes
+
+    - name: Disable ICMP broadcasts (protection against Smurf attacks)
+      ansible.posix.sysctl:
+        name: net.ipv4.icmp_echo_ignore_broadcasts
+        value: '1'
+        state: present
+        reload: yes
+
+  handlers:
+    - name: Restart SSH
+      service: name=ssh state=restarted
+    - name: Restart Fail2Ban
+      service: name=fail2ban state=restarted

